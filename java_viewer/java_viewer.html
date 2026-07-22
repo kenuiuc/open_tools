@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Local Java / Maven Source Viewer</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace; display: flex; height: 100vh; background: #1e1e1e; color: #d4d4d4; }
+    #sidebar { width: 320px; border-right: 1px solid #333; display: flex; flex-direction: column; background: #252526; }
+    #header { padding: 10px; border-bottom: 1px solid #333; }
+    #btn { width: 100%; padding: 8px; background: #0e639c; color: white; border: none; cursor: pointer; border-radius: 2px; }
+    #btn:hover { background: #1177bb; }
+    #file-tree { flex: 1; overflow-y: auto; padding: 10px; font-size: 13px; line-height: 1.6; }
+    .tree-item { cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .tree-item:hover { background: #2a2d2e; color: #fff; }
+    #editor-container { flex: 1; display: flex; flex-direction: column; }
+    #tabs { background: #2d2d2d; padding: 5px 10px; font-size: 12px; color: #9cdcfe; border-bottom: 1px solid #333; }
+    #code-view { flex: 1; margin: 0; padding: 15px; overflow: auto; background: #1e1e1e; color: #d4d4d4; font-family: "Consolas", "Courier New", monospace; font-size: 14px; white-space: pre; }
+  </style>
+</head>
+<body>
+
+  <div id="sidebar">
+    <div id="header">
+      <button id="btn" onclick="openFolder()">Open Maven Project Folder</button>
+    </div>
+    <div id="file-tree"><i>No folder opened. Click above to select project root.</i></div>
+  </div>
+
+  <div id="editor-container">
+    <div id="tabs">Select a file to view</div>
+    <pre id="code-view"><code>// Java source code will display here...</code></pre>
+  </div>
+
+  <script>
+    let dirHandle;
+
+    async function openFolder() {
+      try {
+        dirHandle = await window.showDirectoryPicker();
+        const treeContainer = document.getElementById('file-tree');
+        treeContainer.innerHTML = '';
+        await renderDirectory(dirHandle, treeContainer, '');
+      } catch (err) {
+        console.error('Folder selection cancelled or failed:', err);
+      }
+    }
+
+    async function renderDirectory(handle, container, path) {
+      for await (const entry of handle.values()) {
+        // Skip target build directory and hidden folders
+        if (entry.name === 'target' || entry.name.startsWith('.')) continue;
+
+        const itemEl = document.createElement('div');
+        itemEl.className = 'tree-item';
+        const currentPath = path ? `${path}/${entry.name}` : entry.name;
+
+        if (entry.kind === 'directory') {
+          itemEl.textContent = '📁 ' + entry.name;
+          itemEl.style.paddingLeft = '10px';
+          container.appendChild(itemEl);
+
+          const subContainer = document.createElement('div');
+          subContainer.style.marginLeft = '10px';
+          subContainer.style.display = 'none'; // collapsed by default
+          container.appendChild(subContainer);
+
+          itemEl.onclick = (e) => {
+            e.stopPropagation();
+            subContainer.style.display = subContainer.style.display === 'none' ? 'block' : 'none';
+          };
+
+          await renderDirectory(entry, subContainer, currentPath);
+        } else if (entry.kind === 'file') {
+          if (entry.name.endsWith('.java') || entry.name.endsWith('.xml') || entry.name.endsWith('.properties')) {
+            itemEl.textContent = '📄 ' + entry.name;
+            itemEl.style.paddingLeft = '10px';
+            container.appendChild(itemEl);
+
+            itemEl.onclick = async (e) => {
+              e.stopPropagation();
+              const file = await entry.getFile();
+              const text = await file.text();
+              document.getElementById('tabs').textContent = currentPath;
+              document.getElementById('code-view').textContent = text;
+            };
+          }
+        }
+      }
+    }
+  </script>
+</body>
+</html>
