@@ -1,0 +1,18 @@
+[user]
+	email = kenuiuc@gmail.com
+	name = Ken Wang
+[core]
+	editor = vim
+[credential]
+	helper = cache
+[diff]
+	tool = vimdiff
+[merge]
+	tool = vimdiff
+[difftool]
+	prompt = false
+[filter "lfs"]
+	clean = git-lfs clean -- %f
+	smudge = git-lfs smudge -- %f
+	process = git-lfs filter-process
+	required = true
