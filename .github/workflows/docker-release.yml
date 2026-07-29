@@ -24,34 +24,25 @@ jobs:
           echo "Pulling Docker image: ${{ inputs.image_tag }}"
           docker pull ${{ inputs.image_tag }}
 
-      # 2. Sanitize name and Save Image to TAR
+      # 2. Sanitize name and Save Image directly as TAR
       - name: Save Docker Image to TAR
         run: |
-          mkdir -p output
-          
           # Replace slashes and colons with underscores to create a valid filename/tag
           SAFE_NAME=$(echo "${{ inputs.image_tag }}" | tr '/:' '__')
           
-          # Save to GITHUB_ENV for next steps
+          # Save to GITHUB_ENV for the release step
           echo "SAFE_NAME=$SAFE_NAME" >> $GITHUB_ENV
           
           # Save the Docker image as a tar file
-          docker save ${{ inputs.image_tag }} -o output/${SAFE_NAME}.tar
+          docker save ${{ inputs.image_tag }} -o ${SAFE_NAME}.tar
 
-      # 3. Compress the TAR file into a ZIP archive
-      - name: Zip the TAR file
-        run: |
-          cd output
-          zip -r ../${{ env.SAFE_NAME }}.zip .
-          cd ..
-
-      # 4. Create GitHub Release and Upload the ZIP file
+      # 3. Create GitHub Release and Upload the TAR file directly
       - name: Create Release and Upload Asset
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ env.SAFE_NAME }}
           name: "Docker Image: ${{ inputs.image_tag }}"
-          body: "Release containing saved Docker image `${{ inputs.image_tag }}` as a ZIP archive."
-          files: ${{ env.SAFE_NAME }}.zip
+          body: "Release containing saved Docker image `${{ inputs.image_tag }}` as a `.tar` file."
+          files: ${{ env.SAFE_NAME }}.tar
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
