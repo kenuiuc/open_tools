@@ -1,0 +1,2 @@
+caption always "%{= kw}%-w%{= bW} %{+b k}%n %t %{= kw}%+w"
+defdynamictitle off
