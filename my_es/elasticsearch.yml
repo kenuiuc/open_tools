@@ -1,0 +1,16 @@
+# ======================== Elasticsearch Configuration ========================
+
+# Cluster & Node Name
+cluster.name: "my-docker-cluster"
+node.name: "es-node-01"
+
+# Network Settings
+network.host: 0.0.0.0
+http.port: 9200
+
+# Security Settings (Set to false for local dev/testing; true for production)
+xpack.security.enabled: false
+xpack.security.enrollment.enabled: false
+
+# Memory & Performance Settings
+bootstrap.memory_lock: true
