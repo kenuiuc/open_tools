@@ -29,12 +29,20 @@ jobs:
         run: |
           # Replace slashes and colons with underscores to create a valid filename/tag
           SAFE_NAME=$(echo "${{ inputs.image_tag }}" | tr '/:' '__')
-          
+
           # Save to GITHUB_ENV for the release step
           echo "SAFE_NAME=$SAFE_NAME" >> $GITHUB_ENV
-          
+
           # Save the Docker image as a tar file
           docker save ${{ inputs.image_tag }} -o ${SAFE_NAME}.tar
+
+      - name: Compress TAR to ZIP
+        run: |
+          # Ensure zip is available
+          sudo apt-get update && sudo apt-get install -y zip
+
+          # Compress the tar into a zip archive
+          zip -r ${SAFE_NAME}.zip ${SAFE_NAME}.tar
 
       # 3. Create GitHub Release and Upload the TAR file directly
       - name: Create Release and Upload Asset
@@ -42,7 +50,7 @@ jobs:
         with:
           tag_name: ${{ env.SAFE_NAME }}
           name: "Docker Image: ${{ inputs.image_tag }}"
-          body: "Release containing saved Docker image `${{ inputs.image_tag }}` as a `.tar` file."
-          files: ${{ env.SAFE_NAME }}.tar
+          body: "Release containing saved Docker image `${{ inputs.image_tag }}` as a `.zip` file (contains the .tar)."
+          files: ${{ env.SAFE_NAME }}.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
