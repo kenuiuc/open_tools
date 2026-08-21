@@ -1,0 +1,1 @@
+curl https://api.ai.test.cncbi/v1/models > /dev/null 2>&1 && echo 'success' || echo 'failed'
